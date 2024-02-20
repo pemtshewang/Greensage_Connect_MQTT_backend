@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt          DateTime @default(now())
+  username           String   @unique
+  email              String   @unique
+  password           String
+  mqttBrokerUsername String?
+  mqttBrokerPassword String?
+  mqttBrokerPort     String?
+  mqttBrokerUrl      String?
+  isSuper            Boolean
+}
+
+model User {
+  id                          String                        @id @default(auto()) @map("_id") @db.ObjectId
+  username                    String                        @unique
+  password                    String
+  cid                         String                        @unique
+  mobile                      String                        @unique
+  gewog                       String
+  dzongkhag                   String
+  registeredAt                DateTime                      @default(now())
+  verifiedAt                  DateTime?
+  controllers                 Controller[]
+  accessToken                 AccessToken[]
+  greenhouseCount             Int                           @default(0)
+  irrigationCount             Int                           @default(0)
+  brokerId                    String                        @unique
+  brokerPort                  Int
+  brokerIp                    String
+  Reading                     Reading[]
+  WaterScheduleRecord         WaterScheduleRecord[]
+  SoilMoistureThresholdRecord SoilMoistureThresholdRecord[]
+  TemperatureThresholdRecord  TemperatureThresholdRecord[]
+  HumidityThresholdRecord     HumidityThresholdRecord[]
+}
+
+enum Type {
+  Irrigation
+  Greenhouse
+}
+
+model Controller {
+  id                           String                        @id @default(auto()) @map("_id") @db.ObjectId
+  controllerId                 String                        @unique
+  type                         Type
+  name                         String
+  user                         User                          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId                       String                        @db.ObjectId
+  readings                     Reading[]
+  waterScheduleRecords         WaterScheduleRecord[]
+  soilMoistureThresholdRecords SoilMoistureThresholdRecord[]
+  HumidityThresholdRecord      HumidityThresholdRecord[]
+  TemperatureThresholdRecord   TemperatureThresholdRecord[]
+}
+
+model Reading {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  humidity     Float?
+  temperature  Float?
+  soilMoisture Float?
+  recordedAt   DateTime   @default(now())
+  Pressure     Float?
+  controller   Controller @relation(fields: [controllerId], references: [controllerId], onDelete: Cascade, onUpdate: Cascade)
+  controllerId String
+  User         User       @relation(fields: [brokerId], references: [brokerId], onDelete: Cascade, onUpdate: Cascade)
+  brokerId     String
+}
+
+model WaterScheduleRecord {
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  startTime      String
+  endTime        String
+  repetitionDays Int
+  controller     Controller @relation(fields: [controllerId], references: [controllerId], onDelete: Cascade, onUpdate: Cascade)
+  controllerId   String
+  User           User       @relation(fields: [brokerId], references: [brokerId], onDelete: Cascade, onUpdate: Cascade)
+  brokerId       String
+}
+
+model SoilMoistureThresholdRecord {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  recordedAt   DateTime   @default(now())
+  value        Float
+  controller   Controller @relation(fields: [controllerId], references: [controllerId], onDelete: Cascade, onUpdate: Cascade)
+  controllerId String
+  User         User       @relation(fields: [brokerId], references: [brokerId], onDelete: Cascade, onUpdate: Cascade)
+  brokerId     String
+}
+
+model HumidityThresholdRecord {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  recordedAt   DateTime   @default(now())
+  value        Float
+  controller   Controller @relation(fields: [controllerId], references: [controllerId], onDelete: Cascade, onUpdate: Cascade)
+  controllerId String
+  User         User       @relation(fields: [brokerId], references: [brokerId], onDelete: Cascade, onUpdate: Cascade)
+  brokerId     String
+}
+
+model TemperatureThresholdRecord {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  recordedAt   DateTime   @default(now())
+  value        Float
+  controller   Controller @relation(fields: [controllerId], references: [controllerId], onDelete: Cascade, onUpdate: Cascade)
+  controllerId String
+  User         User       @relation(fields: [brokerId], references: [brokerId], onDelete: Cascade, onUpdate: Cascade)
+  brokerId     String
+}
+
+model NewsFeeds {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  title     String
+  content   String
+  image     String
+  author    String
+  isPublic  Boolean
+}
+
+model AccessToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  token     String   @unique
+  userId    String   @unique @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
